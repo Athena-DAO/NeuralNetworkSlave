@@ -29,9 +29,14 @@ namespace NeuralNetwork
 
         public double Cost()
         {
+
             Matrix<double>[] Activation;
             Matrix<double>[] ActivationWithBias;
             Matrix<double>[] Z;
+            Matrix<double>[] ThetaGradient;
+            Matrix<double>[] ThetaWithoutBias;
+            Matrix<double>[] Delta;
+
             double cost;
             double regularization;
             double regularizationSum = 0.0;
@@ -40,6 +45,9 @@ namespace NeuralNetwork
             Activation = new Matrix<double>[HiddenLayerLength + 2];
             ActivationWithBias = new Matrix<double>[HiddenLayerLength + 2];
             Z = new Matrix<double>[HiddenLayerLength + 2];
+            ThetaGradient = new Matrix<double>[HiddenLayerLength + 2];
+            ThetaWithoutBias = new Matrix<double>[HiddenLayerLength + 2];
+            Delta = new Matrix<double>[HiddenLayerLength + 2];
 
             //Initialization of Matrix Activation[0] and Y
             Activation[0] = Matrix<double>.Build.Dense(X.RowCount, X.ColumnCount, (i, j) => X[i, j]);
@@ -63,6 +71,25 @@ namespace NeuralNetwork
                 (-Y).PointwiseMultiply(Activation[HiddenLayerLength + 1].PointwiseLog()) +
                 (Y - 1).PointwiseMultiply(Activation[HiddenLayerLength + 1].Map(m => (1 - m)).PointwiseLog())
                 ).ColumnSums().Sum() + regularization;
+
+
+
+            Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
+
+            ThetaWithoutBias[HiddenLayerLength] = Matrix<double>.Build.Dense(Theta[HiddenLayerLength].RowCount, Theta[HiddenLayerLength].ColumnCount, 
+                                                    (x, y) => (y == 0 ? 0 : Theta[HiddenLayerLength][x, y]));
+
+            ThetaGradient[HiddenLayerLength] = (1.0 / TrainingSize) * (Delta[HiddenLayerLength].Transpose() * ActivationWithBias[HiddenLayerLength]) +
+                                Lambda / TrainingSize * ThetaWithoutBias[HiddenLayerLength];
+
+            for (int i= HiddenLayerLength-1; i>=0; i--)
+            {
+                ThetaWithoutBias[i] = Matrix<double>.Build.Dense(Theta[i].RowCount, Theta[i].ColumnCount, (x, y) => (y == 0 ? 0 : Theta[i][x, y]));
+                Delta[i] = (Delta[i+1] * Theta[i+1].SubMatrix(0, Theta[i+1].RowCount, 1, Theta[i+1].ColumnCount - 1)).
+                        PointwiseMultiply(SigmoidGradient(Z[1]));
+                ThetaGradient[i] = (1.0 / TrainingSize) * (Delta[i].Transpose() * ActivationWithBias[i]) +
+                                Lambda / TrainingSize * ThetaWithoutBias[i];
+            }
 
             return cost;
         }
