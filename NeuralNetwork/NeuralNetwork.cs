@@ -1,5 +1,6 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using System;
+using System.Collections.Generic;
 
 namespace NeuralNetwork
 {
@@ -27,7 +28,7 @@ namespace NeuralNetwork
             this.y = y;
         }
 
-        public double Cost()
+        public CostGradient Cost()
         {
 
             Matrix<double>[] Activation;
@@ -74,6 +75,7 @@ namespace NeuralNetwork
 
 
 
+            //Calculating gradient at the output layer
             Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
 
             ThetaWithoutBias[HiddenLayerLength] = Matrix<double>.Build.Dense(Theta[HiddenLayerLength].RowCount, Theta[HiddenLayerLength].ColumnCount, 
@@ -82,6 +84,7 @@ namespace NeuralNetwork
             ThetaGradient[HiddenLayerLength] = (1.0 / TrainingSize) * (Delta[HiddenLayerLength].Transpose() * ActivationWithBias[HiddenLayerLength]) +
                                 Lambda / TrainingSize * ThetaWithoutBias[HiddenLayerLength];
 
+            //Calculating gradient at the hidden Layers
             for (int i= HiddenLayerLength-1; i>=0; i--)
             {
                 ThetaWithoutBias[i] = Matrix<double>.Build.Dense(Theta[i].RowCount, Theta[i].ColumnCount, (x, y) => (y == 0 ? 0 : Theta[i][x, y]));
@@ -91,7 +94,52 @@ namespace NeuralNetwork
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
 
-            return cost;
+            return new CostGradient(cost, ThetaGradient);
+        }
+
+        public void Train()
+        {
+
+
+
+            var thetaUnpack = UnpackTheta();
+
+
+            double epsg = 0.0000000001;
+            double epsf = 0;
+            double epsx = 0;
+            int maxits = 400;
+
+
+
+            alglib.minlbfgsstate state;
+            alglib.minlbfgsreport rep;
+
+            alglib.minlbfgscreate(1,thetaUnpack, out state);
+            alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+            alglib.minlbfgsoptimize(state, CostGradient, null, null);
+            alglib.minlbfgsresults(state, out x, out rep);
+
+        }
+
+
+        private double[] UnpackTheta()
+        {
+            int sum=0,k=0;
+            double[] ThetaUnpack;
+            foreach (var theta in this.Theta)
+            {
+                sum += theta.RowCount * theta.ColumnCount;
+            }
+            ThetaUnpack = new double[sum];
+
+            foreach (var theta in this.Theta)
+            {
+                for (int i = 0; i < theta.RowCount; i++)
+                    for (int j = 0; i < theta.ColumnCount; j++)
+                        ThetaUnpack[k++] = theta[i, j];
+            }
+            return ThetaUnpack;
         }
 
         public Matrix<double> Sigmoid(Matrix<double> matrix)
