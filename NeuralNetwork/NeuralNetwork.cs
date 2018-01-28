@@ -251,7 +251,6 @@ namespace NeuralNetwork
                 Activation[i + 1] = Sigmoid(Z[i + 1]);
             }
 
-            
             for (int i = 0; i < Activation[HiddenLayerLength + 1].RowCount; i++)
             {
                 double max = 0, index = -1;
