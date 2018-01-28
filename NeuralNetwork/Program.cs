@@ -55,7 +55,7 @@ namespace NeuralNetwork
 
             neuralNetwork.ReadParams(Theta, X, y);
 
-            neuralNetwork.Train(200);
+            neuralNetwork.Train(50);
 
           
 
