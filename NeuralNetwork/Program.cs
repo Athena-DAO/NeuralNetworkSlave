@@ -25,11 +25,27 @@ namespace NeuralNetwork
             }
 
             var data = lines.ToArray();
+            stream.Close();
 
             return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
 
+            
         }
 
+
+
+        public static void WriteCsv(string path , Matrix<double> matrix)
+        {
+            StreamWriter stream = new StreamWriter(path);
+
+
+          for(int i=0;i<matrix.RowCount;i++)
+            {
+                var result = string.Join(",", matrix.Row(i).ToArray());
+                stream.WriteLine(result);
+            }
+            stream.Close();
+        }
 
 
 
@@ -40,6 +56,10 @@ namespace NeuralNetwork
             var Theta2 = ReadCsv("Theta2_value.csv");
             var X = ReadCsv("X_value.csv");
             var y = ReadCsv("Y_value.csv");
+            var x_Test = ReadCsv("X_predict.csv");
+
+            WriteCsv("Hello.csv",Theta1);
+
             Matrix<double>[] Theta = new Matrix<double>[2];
             Theta[0] = Matrix<double>.Build.Random(25, 401);
             Theta[1] = Matrix<double>.Build.Random(10, 26);
@@ -55,14 +75,14 @@ namespace NeuralNetwork
 
             neuralNetwork.ReadParams(Theta, X, y);
 
-            neuralNetwork.Train(50);
-
-          
-
-            double c = neuralNetwork.Cost();
+            neuralNetwork.Train(200);
 
 
 
+            double[] predictions = neuralNetwork.predict(x_Test);
+
+            WriteCsv("TrainedTheta1.csv", neuralNetwork.Theta[0]);
+            WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
     }

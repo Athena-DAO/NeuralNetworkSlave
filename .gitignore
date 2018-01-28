@@ -259,7 +259,4 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-/NeuralNetwork/Y_value.csv
-/NeuralNetwork/X_value.csv
-/NeuralNetwork/Theta2_value.csv
-/NeuralNetwork/Theta1_value.csv
+

@@ -13,7 +13,7 @@ namespace NeuralNetwork
         public int TrainingSize { get; set; }
         public double Lambda { get; set; }
 
-        private Matrix<double>[] Theta;
+        public Matrix<double>[] Theta;
         private Matrix<double> X;
         private Matrix<double> y;
         private alglib.minlbfgsstate state;
@@ -41,8 +41,6 @@ namespace NeuralNetwork
             Matrix<double>[] Activation;
             Matrix<double>[] ActivationWithBias;
             Matrix<double>[] Z;
-
-
 
             //Initialization of Matrix Array
             Activation = new Matrix<double>[HiddenLayerLength + 2];
@@ -153,11 +151,11 @@ namespace NeuralNetwork
             alglib.minlbfgscreate(1, thetaUnpack, out state);
             alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxIterations);
             Thread t = new Thread(DisplayCost);
+            Cost();
             t.Start();
             alglib.minlbfgsoptimize(state, Cost, null, null);
             alglib.minlbfgsresults(state, out thetaUnpack, out rep);
-            Console.WriteLine("Termination type {0}", rep.terminationtype);
-            Console.WriteLine("Iteration Count {0}", rep.iterationscount);
+            Console.WriteLine("Termination type {0} Iteration Count {1}", rep.terminationtype, rep.iterationscount);
             var theta = PackTheta(thetaUnpack);
             this.Theta = theta;
 
@@ -229,6 +227,43 @@ namespace NeuralNetwork
             thetaPack[HiddenLayerLength] = Matrix<double>.Build.Dense(OutputLayerSize, HiddenLayerSize + 1, (i, j) => (thetaUnpack[k + (HiddenLayerSize + 1) * i + j]));
 
             return thetaPack;
+        }
+
+        public double[] predict(Matrix<double> X)
+        {
+            Matrix<double>[] Activation;
+            Matrix<double>[] ActivationWithBias;
+            Matrix<double>[] Z;
+            var predictions = new double[X.RowCount];
+
+            //Initialization of Matrix Array
+            Activation = new Matrix<double>[HiddenLayerLength + 2];
+            ActivationWithBias = new Matrix<double>[HiddenLayerLength + 1];
+            Z = new Matrix<double>[HiddenLayerLength + 2];
+
+            //Initialization of Matrix Activation[0] and Y
+            Activation[0] = Matrix<double>.Build.Dense(X.RowCount, X.ColumnCount, (i, j) => X[i, j]);
+
+            for (int i = 0; i < HiddenLayerLength + 1; i++)
+            {
+                ActivationWithBias[i] = Matrix<double>.Build.Dense(Activation[i].RowCount, Activation[i].ColumnCount + 1, (x, y) => (y == 0 ? 1 : Activation[i][x, y - 1]));
+                Z[i + 1] = ActivationWithBias[i] * Theta[i].Transpose();
+                Activation[i + 1] = Sigmoid(Z[i + 1]);
+            }
+
+            
+            for (int i = 0; i < Activation[HiddenLayerLength + 1].RowCount; i++)
+            {
+                double max = 0, index = -1;
+                for (int j = 0; j < Activation[HiddenLayerLength + 1].ColumnCount; j++)
+                    if (Activation[HiddenLayerLength + 1][i, j] > max)
+                    {
+                        max = Activation[HiddenLayerLength + 1][i, j];
+                        index = j;
+                    }
+                predictions[i] = index;
+            }
+            return predictions;
         }
 
         public Matrix<double> Sigmoid(Matrix<double> matrix)
