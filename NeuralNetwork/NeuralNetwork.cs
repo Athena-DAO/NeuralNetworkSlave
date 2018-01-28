@@ -1,6 +1,6 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
 using System;
-using System.Collections.Generic;
+using System.Threading;
 
 namespace NeuralNetwork
 {
@@ -16,10 +16,14 @@ namespace NeuralNetwork
         private Matrix<double>[] Theta;
         private Matrix<double> X;
         private Matrix<double> y;
-        private Matrix<double>[] ThetaGradient;
+        private alglib.minlbfgsstate state;
+        private int MaxIteration;
+        private double cost;
+
+        private const int SLEEP = 1000;
+
         public NeuralNetwork()
         {
-
         }
 
         public void ReadParams(Matrix<double>[] Theta, Matrix<double> X, Matrix<double> y)
@@ -31,7 +35,6 @@ namespace NeuralNetwork
 
         public double Cost()
         {
-
             Matrix<double>[] Activation;
             Matrix<double>[] ActivationWithBias;
             Matrix<double>[] Z;
@@ -73,42 +76,38 @@ namespace NeuralNetwork
                 (-Y).PointwiseMultiply(Activation[HiddenLayerLength + 1].PointwiseLog()) +
                 (Y - 1).PointwiseMultiply(Activation[HiddenLayerLength + 1].Map(m => (1 - m)).PointwiseLog())
                 ).ColumnSums().Sum() + regularization;
-
-
+            this.cost = cost;
 
             //Calculating gradient at the output layer
             Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
 
-            ThetaWithoutBias[HiddenLayerLength] = Matrix<double>.Build.Dense(Theta[HiddenLayerLength].RowCount, Theta[HiddenLayerLength].ColumnCount, 
+            ThetaWithoutBias[HiddenLayerLength] = Matrix<double>.Build.Dense(Theta[HiddenLayerLength].RowCount, Theta[HiddenLayerLength].ColumnCount,
                                                     (x, y) => (y == 0 ? 0 : Theta[HiddenLayerLength][x, y]));
 
             ThetaGradient[HiddenLayerLength] = (1.0 / TrainingSize) * (Delta[HiddenLayerLength].Transpose() * ActivationWithBias[HiddenLayerLength]) +
                                 Lambda / TrainingSize * ThetaWithoutBias[HiddenLayerLength];
 
             //Calculating gradient at the hidden Layers
-            for (int i= HiddenLayerLength-1; i>=0; i--)
+            for (int i = HiddenLayerLength - 1; i >= 0; i--)
             {
                 ThetaWithoutBias[i] = Matrix<double>.Build.Dense(Theta[i].RowCount, Theta[i].ColumnCount, (x, y) => (y == 0 ? 0 : Theta[i][x, y]));
-                Delta[i] = (Delta[i+1] * Theta[i+1].SubMatrix(0, Theta[i+1].RowCount, 1, Theta[i+1].ColumnCount - 1)).
+                Delta[i] = (Delta[i + 1] * Theta[i + 1].SubMatrix(0, Theta[i + 1].RowCount, 1, Theta[i + 1].ColumnCount - 1)).
                         PointwiseMultiply(SigmoidGradient(Z[1]));
                 ThetaGradient[i] = (1.0 / TrainingSize) * (Delta[i].Transpose() * ActivationWithBias[i]) +
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
             // var grad = UnpackTheta(ThetaGradient);
-            this.ThetaGradient = ThetaGradient;
+            //this.ThetaGradient = ThetaGradient;
             return cost;
         }
 
         public void Cost(double[] thetaUnpacked, ref double cost, double[] grad, object obj)
         {
-
-
             Matrix<double>[] Theta = PackTheta(thetaUnpacked);
-            Matrix<double>[] ThetaGradient = PackTheta(grad);
             Matrix<double>[] Activation;
             Matrix<double>[] ActivationWithBias;
             Matrix<double>[] Z;
-           // Matrix<double>[] ThetaGradient;
+            Matrix<double>[] ThetaGradient;
             Matrix<double>[] ThetaWithoutBias;
             Matrix<double>[] Delta;
 
@@ -119,7 +118,7 @@ namespace NeuralNetwork
             Activation = new Matrix<double>[HiddenLayerLength + 2];
             ActivationWithBias = new Matrix<double>[HiddenLayerLength + 1];
             Z = new Matrix<double>[HiddenLayerLength + 2];
-            //ThetaGradient = new Matrix<double>[HiddenLayerLength + 1];
+            ThetaGradient = new Matrix<double>[HiddenLayerLength + 1];
             ThetaWithoutBias = new Matrix<double>[HiddenLayerLength + 1];
             Delta = new Matrix<double>[HiddenLayerLength + 1];
 
@@ -146,7 +145,7 @@ namespace NeuralNetwork
                 (Y - 1).PointwiseMultiply(Activation[HiddenLayerLength + 1].Map(m => (1 - m)).PointwiseLog())
                 ).ColumnSums().Sum() + regularization;
 
-
+            this.cost = cost;
 
             //Calculating gradient at the output layer
             Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
@@ -167,39 +166,29 @@ namespace NeuralNetwork
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
 
-            //ThetaGradient[0] = ThetaGradient[0] * 10000;
-            //ThetaGradient[1] = ThetaGradient[1] * 10000;
-
-            grad = UnpackTheta(ThetaGradient);
-          
+            UnpackTheta(ThetaGradient, ref grad);
         }
 
-
-
-        public int Train(int maxits,int m)
+        public int Train(int maxIterations)
         {
+            this.MaxIteration = maxIterations;
 
+            var thetaUnpack = UnpackTheta(Theta);
 
-
-          var thetaUnpack = UnpackTheta(Theta);
-
-
-            double epsg = 0;
+            double epsg = 0.0000000001;
             double epsf = 0;
             double epsx = 0;
-            
 
-
-
-            alglib.minlbfgsstate state;
             alglib.minlbfgsreport rep;
 
-            alglib.minlbfgscreate(thetaUnpack.Length,m,thetaUnpack, out state);
-            alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-           
+            alglib.minlbfgscreate(1, thetaUnpack, out state);
+            alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxIterations);
+
+            Thread t = new Thread(DisplayCost);
+            t.Start();
+
             alglib.minlbfgsoptimize(state, Cost, null, null);
             alglib.minlbfgsresults(state, out thetaUnpack, out rep);
-
 
             Console.WriteLine("Termination type {0}", rep.terminationtype);
             Console.WriteLine("Iteration Count {0}", rep.iterationscount);
@@ -210,33 +199,33 @@ namespace NeuralNetwork
             return rep.terminationtype;
         }
 
-
-
-
-        public void TrainByGradientDescent(double learningRate, int maxIterations)
+        public void DisplayCost()
         {
+            double[] thetaUnpack;
+            alglib.minlbfgsreport rep = new alglib.minlbfgsreport();
 
-
-            for (int z = 0; z < maxIterations; z++)
+            do
             {
-                var cost = Cost();
+                try
+                {
+                    alglib.minlbfgsresults(state, out thetaUnpack, out rep);
+                    Console.WriteLine("Iteration {0}| Cost {1}", rep.iterationscount, cost);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Exception {0}", e);
+                }
 
-                Console.WriteLine("Cost {0} | Iteration {1}", cost, z);
-
-                for (int i = 0; i < Theta.Length; i++)
-                    Theta[i] = Theta[i] - learningRate * ThetaGradient[i];
-                        
-                
-
-
+                Thread.Sleep(SLEEP);
             }
+            while (rep.iterationscount != (MaxIteration));
         }
 
-        public double[] UnpackTheta(Matrix<double> [] thetaPacked )
+        public double[] UnpackTheta(Matrix<double>[] thetaPacked)
         {
-            int sum=0,k=0;
+            int sum = 0, k = 0;
             double[] ThetaUnpack;
-           
+
             sum = HiddenLayerSize * (InputLayerSize + 1) + (HiddenLayerLength - 1) * (HiddenLayerSize) * (HiddenLayerSize + 1) + OutputLayerSize * (HiddenLayerSize + 1);
             ThetaUnpack = new double[sum];
 
@@ -249,7 +238,19 @@ namespace NeuralNetwork
             return ThetaUnpack;
         }
 
+        public void UnpackTheta(Matrix<double>[] thetaPacked, ref double[] ThetaUnpack)
+        {
+            int sum = 0, k = 0;
 
+            sum = HiddenLayerSize * (InputLayerSize + 1) + (HiddenLayerLength - 1) * (HiddenLayerSize) * (HiddenLayerSize + 1) + OutputLayerSize * (HiddenLayerSize + 1);
+
+            foreach (var theta in thetaPacked)
+            {
+                for (int i = 0; i < theta.RowCount; i++)
+                    for (int j = 0; j < theta.ColumnCount; j++)
+                        ThetaUnpack[k++] = theta[i, j];
+            }
+        }
 
         public Matrix<double>[] PackTheta(double[] thetaUnpack)
         {
@@ -257,25 +258,21 @@ namespace NeuralNetwork
             Matrix<double>[] thetaPack = new Matrix<double>[HiddenLayerLength + 1];
 
             //Input Layer
-            thetaPack[0] = Matrix<double>.Build.Dense(HiddenLayerSize, InputLayerSize + 1,(i,j)=>(thetaUnpack[k+(InputLayerSize+1)*i+j]));
+            thetaPack[0] = Matrix<double>.Build.Dense(HiddenLayerSize, InputLayerSize + 1, (i, j) => (thetaUnpack[k + (InputLayerSize + 1) * i + j]));
             k += HiddenLayerSize * (InputLayerSize + 1);
 
             //Hidden Layers
             for (int i = 1; i < HiddenLayerLength; i++)
             {
-                thetaPack[i] = Matrix<double>.Build.Dense(HiddenLayerSize, HiddenLayerSize+1, (x, y) => (thetaUnpack[k + (HiddenLayerSize+1) * x + y]));
-                k += (HiddenLayerSize) * (HiddenLayerSize+1);
+                thetaPack[i] = Matrix<double>.Build.Dense(HiddenLayerSize, HiddenLayerSize + 1, (x, y) => (thetaUnpack[k + (HiddenLayerSize + 1) * x + y]));
+                k += (HiddenLayerSize) * (HiddenLayerSize + 1);
             }
 
             //Output Layer
             thetaPack[HiddenLayerLength] = Matrix<double>.Build.Dense(OutputLayerSize, HiddenLayerSize + 1, (i, j) => (thetaUnpack[k + (HiddenLayerSize + 1) * i + j]));
-            
 
             return thetaPack;
         }
-
-
-
 
         public Matrix<double> Sigmoid(Matrix<double> matrix)
         {

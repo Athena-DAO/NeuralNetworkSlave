@@ -55,12 +55,9 @@ namespace NeuralNetwork
 
             neuralNetwork.ReadParams(Theta, X, y);
 
+            neuralNetwork.Train(200);
 
-            //double ct = neuralNetwork.Cost();
-
-            //neuralNetwork.Train(1000,100);
-
-            neuralNetwork.TrainByGradientDescent(3, 2000);
+          
 
             double c = neuralNetwork.Cost();
 
