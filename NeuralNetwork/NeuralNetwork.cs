@@ -16,7 +16,7 @@ namespace NeuralNetwork
         private Matrix<double>[] Theta;
         private Matrix<double> X;
         private Matrix<double> y;
-
+        private Matrix<double>[] ThetaGradient;
         public NeuralNetwork()
         {
 
@@ -94,7 +94,8 @@ namespace NeuralNetwork
                 ThetaGradient[i] = (1.0 / TrainingSize) * (Delta[i].Transpose() * ActivationWithBias[i]) +
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
-           // var grad = UnpackTheta(ThetaGradient);
+            // var grad = UnpackTheta(ThetaGradient);
+            this.ThetaGradient = ThetaGradient;
             return cost;
         }
 
@@ -166,13 +167,16 @@ namespace NeuralNetwork
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
 
+            //ThetaGradient[0] = ThetaGradient[0] * 10000;
+            //ThetaGradient[1] = ThetaGradient[1] * 10000;
+
             grad = UnpackTheta(ThetaGradient);
           
         }
 
 
 
-        public void Train(int maxits)
+        public int Train(int maxits,int m)
         {
 
 
@@ -190,15 +194,43 @@ namespace NeuralNetwork
             alglib.minlbfgsstate state;
             alglib.minlbfgsreport rep;
 
-            alglib.minlbfgscreate(1,thetaUnpack, out state);
+            alglib.minlbfgscreate(thetaUnpack.Length,m,thetaUnpack, out state);
             alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+           
             alglib.minlbfgsoptimize(state, Cost, null, null);
             alglib.minlbfgsresults(state, out thetaUnpack, out rep);
 
+
+            Console.WriteLine("Termination type {0}", rep.terminationtype);
+            Console.WriteLine("Iteration Count {0}", rep.iterationscount);
+
             var theta = PackTheta(thetaUnpack);
             this.Theta = theta;
+
+            return rep.terminationtype;
         }
 
+
+
+
+        public void TrainByGradientDescent(double learningRate, int maxIterations)
+        {
+
+
+            for (int z = 0; z < maxIterations; z++)
+            {
+                var cost = Cost();
+
+                Console.WriteLine("Cost {0} | Iteration {1}", cost, z);
+
+                for (int i = 0; i < Theta.Length; i++)
+                    Theta[i] = Theta[i] - learningRate * ThetaGradient[i];
+                        
+                
+
+
+            }
+        }
 
         public double[] UnpackTheta(Matrix<double> [] thetaPacked )
         {

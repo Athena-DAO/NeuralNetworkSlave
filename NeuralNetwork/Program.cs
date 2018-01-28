@@ -50,7 +50,7 @@ namespace NeuralNetwork
                 HiddenLayerLength = 1,
                 OutputLayerSize = 10,
                 TrainingSize = 5000,
-                Lambda = 1
+                Lambda = 3
             };
 
             neuralNetwork.ReadParams(Theta, X, y);
@@ -58,7 +58,9 @@ namespace NeuralNetwork
 
             //double ct = neuralNetwork.Cost();
 
-            neuralNetwork.Train(1000);
+            //neuralNetwork.Train(1000,100);
+
+            neuralNetwork.TrainByGradientDescent(3, 2000);
 
             double c = neuralNetwork.Cost();
 
