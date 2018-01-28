@@ -19,6 +19,7 @@ namespace NeuralNetwork
 
         public NeuralNetwork()
         {
+
         }
 
         public void ReadParams(Matrix<double>[] Theta, Matrix<double> X, Matrix<double> y)
@@ -28,7 +29,7 @@ namespace NeuralNetwork
             this.y = y;
         }
 
-        public CostGradient Cost()
+        public double Cost()
         {
 
             Matrix<double>[] Activation;
@@ -94,15 +95,19 @@ namespace NeuralNetwork
                                 Lambda / TrainingSize * ThetaWithoutBias[i];
             }
 
-            return new CostGradient(cost, ThetaGradient);
+            return cost;
         }
+
+      
+
+
 
         public void Train()
         {
 
 
 
-            var thetaUnpack = UnpackTheta();
+          //  var thetaUnpack = UnpackTheta();
 
 
             double epsg = 0.0000000001;
@@ -111,36 +116,60 @@ namespace NeuralNetwork
             int maxits = 400;
 
 
-
+/*
             alglib.minlbfgsstate state;
             alglib.minlbfgsreport rep;
 
             alglib.minlbfgscreate(1,thetaUnpack, out state);
             alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-            alglib.minlbfgsoptimize(state, CostGradient, null, null);
-            alglib.minlbfgsresults(state, out x, out rep);
-
+            //alglib.minlbfgsoptimize(state, CostGra, null, null);
+            //alglib.minlbfgsresults(state, out x, out rep);
+*/
         }
 
 
-        private double[] UnpackTheta()
+        public double[] UnpackTheta(Matrix<double> [] thetaPacked )
         {
             int sum=0,k=0;
             double[] ThetaUnpack;
-            foreach (var theta in this.Theta)
-            {
-                sum += theta.RowCount * theta.ColumnCount;
-            }
+           
+            sum = HiddenLayerSize * (InputLayerSize + 1) + (HiddenLayerLength - 1) * (HiddenLayerSize) * (HiddenLayerSize + 1) + OutputLayerSize * (HiddenLayerSize + 1);
             ThetaUnpack = new double[sum];
 
-            foreach (var theta in this.Theta)
+            foreach (var theta in thetaPacked)
             {
                 for (int i = 0; i < theta.RowCount; i++)
-                    for (int j = 0; i < theta.ColumnCount; j++)
+                    for (int j = 0; j < theta.ColumnCount; j++)
                         ThetaUnpack[k++] = theta[i, j];
             }
             return ThetaUnpack;
         }
+
+        public Matrix<double>[] PackTheta(double[] thetaUnpack)
+        {
+            int k = 0;
+            Matrix<double>[] thetaPack = new Matrix<double>[HiddenLayerLength + 1];
+
+            //Input Layer
+            thetaPack[0] = Matrix<double>.Build.Dense(HiddenLayerSize, InputLayerSize + 1,(i,j)=>(thetaUnpack[k+(InputLayerSize+1)*i+j]));
+            k += HiddenLayerSize * (InputLayerSize + 1);
+
+            //Hidden Layers
+            for (int i = 1; i < HiddenLayerLength; i++)
+            {
+                thetaPack[i] = Matrix<double>.Build.Dense(HiddenLayerSize, HiddenLayerSize+1, (x, y) => (thetaUnpack[k + (HiddenLayerSize+1) * x + y]));
+                k += (HiddenLayerSize) * (HiddenLayerSize+1);
+            }
+
+            //Output Layer
+            thetaPack[HiddenLayerLength] = Matrix<double>.Build.Dense(OutputLayerSize, HiddenLayerSize + 1, (i, j) => (thetaUnpack[k + (HiddenLayerSize + 1) * i + j]));
+            
+
+            return thetaPack;
+        }
+
+
+
 
         public Matrix<double> Sigmoid(Matrix<double> matrix)
         {

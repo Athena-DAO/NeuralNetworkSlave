@@ -55,6 +55,17 @@ namespace NeuralNetwork
 
             neuralNetwork.ReadParams(Theta, X, y);
 
+            var t =neuralNetwork.UnpackTheta(Theta);
+
+            var t2 = neuralNetwork.PackTheta(t);
+
+            if (t2[0].Equals(Theta1))
+                Console.WriteLine("Equal 1");
+
+            if (t2[1].Equals(Theta2))
+                Console.WriteLine("Equal 2");
+
+
             double ct = neuralNetwork.Cost();
 
             Console.ReadLine();
