@@ -12,12 +12,16 @@ namespace NeuralNetwork
         public int OutputLayerSize { get; set; }
         public int TrainingSize { get; set; }
         public double Lambda { get; set; }
+        public int Epoch { get; set; }
 
-        public Matrix<double>[] Theta;
-        private Matrix<double> X;
-        private Matrix<double> y;
+        public Matrix<double>[] Theta { get; set; }
+        public Matrix<double> X { get; set; }
+        public Matrix<double> y { get; set; }
+
+        // public Matrix<double>[] Theta;
+        //private Matrix<double> X;
+        //private Matrix<double> y;
         private alglib.minlbfgsstate state;
-        private int MaxIteration;
         private double cost;
         private const int SLEEP = 1000;
 
@@ -25,6 +29,14 @@ namespace NeuralNetwork
         {
         }
 
+        public void InitializeTheta()
+        {
+            Theta = new Matrix<double>[HiddenLayerLength + 1];
+            Theta[0] = Matrix<double>.Build.Random(HiddenLayerSize, InputLayerSize + 1);
+            Theta[HiddenLayerLength] = Matrix<double>.Build.Random(OutputLayerSize, HiddenLayerSize + 1);
+            for (int i = 1; i < HiddenLayerLength; i++)
+                Theta[i] = Matrix<double>.Build.Random(HiddenLayerSize + 1, HiddenLayerSize);
+        }
         public void ReadParams(Matrix<double>[] Theta, Matrix<double> X, Matrix<double> y)
         {
             this.Theta = Theta;
@@ -138,18 +150,16 @@ namespace NeuralNetwork
             UnpackTheta(ThetaGradient, ref grad);
         }
 
-        public int Train(int maxIterations)
+        public int Train()
         {
             double epsg = 0.0000000001;
             double epsf = 0;
             double epsx = 0;
-
-            this.MaxIteration = maxIterations;
             var thetaUnpack = UnpackTheta(Theta);
 
             alglib.minlbfgsreport rep;
             alglib.minlbfgscreate(1, thetaUnpack, out state);
-            alglib.minlbfgssetcond(state, epsg, epsf, epsx, maxIterations);
+            alglib.minlbfgssetcond(state, epsg, epsf, epsx, Epoch);
             Thread t = new Thread(DisplayCost);
             Cost();
             t.Start();
@@ -172,7 +182,7 @@ namespace NeuralNetwork
                 Console.WriteLine("Iteration {0}| Cost {1}", rep.iterationscount, cost);
                 Thread.Sleep(SLEEP);
             }
-            while (rep.iterationscount != (MaxIteration));
+            while (rep.iterationscount != (Epoch));
         }
 
         public double[] UnpackTheta(Matrix<double>[] thetaPacked)
