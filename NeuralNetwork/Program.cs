@@ -64,11 +64,12 @@ namespace NeuralNetwork
 
                 StreamReader streamReader = new StreamReader(stream);
                 StreamWriter streamWriter = new StreamWriter(stream);
-                //string fileAppend = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}";
-                //StreamWriter streamXValue = new StreamWriter(fileAppend + "_X_value");
+                string fileAppend = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+                StreamWriter streamXValue = new StreamWriter(fileAppend + "_X_value" + socket.RemoteEndPoint.ToString().Split(":")[1]+".csv");
+                StreamWriter streamYValue = new StreamWriter(fileAppend + "_Y_value" + socket.RemoteEndPoint.ToString().Split(":")[1] +".csv");
                 streamWriter.AutoFlush = true;
 
-                var neuralNetwork = BuildNeuralNetwork(streamReader);
+                var neuralNetwork = BuildNeuralNetwork(streamReader,streamXValue,streamYValue);
                 neuralNetwork.InitializeTheta();
                 neuralNetwork.Train();
                 streamWriter.WriteLine("Success");
@@ -86,38 +87,56 @@ namespace NeuralNetwork
         }
         
  
-        public static NeuralNetwork BuildNeuralNetwork(StreamReader streamReader)
+        public static NeuralNetwork BuildNeuralNetwork(StreamReader streamReader,StreamWriter streamXValue , StreamWriter streamYValue)
         {
+
+
+
+            int InputLayerSize = int.Parse(streamReader.ReadLine());
+            int HiddenLayerSize = int.Parse(streamReader.ReadLine());
+            int HiddenLayerLength = int.Parse(streamReader.ReadLine());
+            int OutputLayerSize = int.Parse(streamReader.ReadLine());
+            int TrainingSize = int.Parse(streamReader.ReadLine());
+            double Lambda = double.Parse(streamReader.ReadLine());
+            int Epoch = int.Parse(streamReader.ReadLine());
+            var  X = BuildMatrix(streamReader,streamXValue);
+            var y = BuildMatrix(streamReader,streamYValue);
+
             return new NeuralNetwork
             {
-                InputLayerSize = int.Parse(streamReader.ReadLine()),
-                HiddenLayerSize = int.Parse(streamReader.ReadLine()),
-                HiddenLayerLength = int.Parse(streamReader.ReadLine()),
-                OutputLayerSize = int.Parse(streamReader.ReadLine()),
-                TrainingSize = int.Parse(streamReader.ReadLine()),
-                Lambda = int.Parse(streamReader.ReadLine()),
-                Epoch = int.Parse(streamReader.ReadLine()),
-                X = BuildMatrix(streamReader),
-                y = BuildMatrix(streamReader)
+                InputLayerSize = InputLayerSize,
+                HiddenLayerSize = HiddenLayerSize,
+                HiddenLayerLength = HiddenLayerLength,
+                OutputLayerSize = OutputLayerSize,
+                TrainingSize = TrainingSize,
+                Lambda = Lambda,
+                Epoch = Epoch,
+                X = X,
+                y = y
             };
+
         }
 
-        public static Matrix<double> BuildMatrix(StreamReader streamReader)
+        public static Matrix<double> BuildMatrix(StreamReader streamReader,StreamWriter streamWrite)
         {
+
             int filesize = int.Parse(streamReader.ReadLine());
-            char[] buffer = new char[1024 * 10];
+            char[] buffer = new char[1024];
             var lines = new List<double[]>();
             int size = 0;
             int num;
             StringBuilder stringBuilder = new StringBuilder(filesize);
             while (size < (filesize) && (num = streamReader.Read(buffer, 0, buffer.Length)) != 0)
             {
+                streamWrite.Write(new String(buffer, 0, num));
                 stringBuilder.Append(buffer, 0, num);
                 size += num;
             }
+            //Console.Write(stringBuilder.ToString());
 
-            var Data = stringBuilder.ToString().Split("\n");
-            Console.WriteLine("DataLength =" +Data.Length);
+            var temp = stringBuilder.ToString().Replace("\r", "");
+            var Data = temp.Split("\n");
+            Console.WriteLine("DataLength =" + Data.Length);
             for (int i = 0; i < Data.Length; i++)
             {
                 string[] line = Data[i].Split(',');
