@@ -41,21 +41,21 @@ namespace NeuralNetwork
             var bytes = new byte[1024];
             int received = stream.Read(bytes, 0, 1024);
             string jsonCom = Encoding.ASCII.GetString(bytes, 0, received);
-            NeuralNetworkCom neuralNetworkCom = JsonConvert.DeserializeObject<NeuralNetworkCom>(jsonCom);
+            NeuralNetworkParameters neuralNetworkParameters = JsonConvert.DeserializeObject<NeuralNetworkParameters>(jsonCom);
             SendOk();
-            var X = BuildMatrix(neuralNetworkCom.XDataSize);
+            var X = BuildMatrix(neuralNetworkParameters.XDataSize);
             SendOk();
-            var y = BuildMatrix(neuralNetworkCom.YDataSize);
+            var y = BuildMatrix(neuralNetworkParameters.YDataSize);
             SendOk();
             return new NeuralNetwork
             {
-                InputLayerSize = neuralNetworkCom.InputLayerSize,
-                HiddenLayerSize = neuralNetworkCom.HiddenLayerSize,
-                HiddenLayerLength = neuralNetworkCom.HiddenLayerLength,
-                OutputLayerSize = neuralNetworkCom.OutputLayerSize,
-                TrainingSize = neuralNetworkCom.TrainingSize,
-                Lambda = neuralNetworkCom.Lambda,
-                Epoch = neuralNetworkCom.Epoch,
+                InputLayerSize = neuralNetworkParameters.InputLayerSize,
+                HiddenLayerSize = neuralNetworkParameters.HiddenLayerSize,
+                HiddenLayerLength = neuralNetworkParameters.HiddenLayerLength,
+                OutputLayerSize = neuralNetworkParameters.OutputLayerSize,
+                TrainingSize = neuralNetworkParameters.TrainingSize,
+                Lambda = neuralNetworkParameters.Lambda,
+                Epoch = neuralNetworkParameters.Epoch,
                 X = X,
                 y = y
             };

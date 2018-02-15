@@ -4,7 +4,7 @@ using System.Text;
 
 namespace NeuralNetwork
 {
-    class NeuralNetworkCom
+    class NeuralNetworkParameters
     {
         public int InputLayerSize { get; set; }
         public int HiddenLayerSize { get; set; }
