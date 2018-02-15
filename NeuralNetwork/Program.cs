@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -69,7 +70,7 @@ namespace NeuralNetwork
                 StreamWriter streamYValue = new StreamWriter(fileAppend + "_Y_value" + socket.RemoteEndPoint.ToString().Split(":")[1] +".csv");
                 streamWriter.AutoFlush = true;
 
-                var neuralNetwork = BuildNeuralNetwork(streamReader,streamXValue,streamYValue);
+                var neuralNetwork = BuildNeuralNetwork(streamReader,stream,streamXValue,streamYValue);
                 neuralNetwork.InitializeTheta();
                 neuralNetwork.Train();
                 streamWriter.WriteLine("Success");
@@ -87,50 +88,55 @@ namespace NeuralNetwork
         }
         
  
-        public static NeuralNetwork BuildNeuralNetwork(StreamReader streamReader,StreamWriter streamXValue , StreamWriter streamYValue)
+        public static NeuralNetwork BuildNeuralNetwork(StreamReader streamReader,Stream stream,StreamWriter streamXValue , StreamWriter streamYValue)
         {
 
+            var bytes = new byte[1024];
 
-
-            int InputLayerSize = int.Parse(streamReader.ReadLine());
-            int HiddenLayerSize = int.Parse(streamReader.ReadLine());
-            int HiddenLayerLength = int.Parse(streamReader.ReadLine());
-            int OutputLayerSize = int.Parse(streamReader.ReadLine());
-            int TrainingSize = int.Parse(streamReader.ReadLine());
-            double Lambda = double.Parse(streamReader.ReadLine());
-            int Epoch = int.Parse(streamReader.ReadLine());
-            var  X = BuildMatrix(streamReader,streamXValue);
-            var y = BuildMatrix(streamReader,streamYValue);
-
+            int received=stream.Read(bytes, 0, 1024);
+            string jsonCom = Encoding.ASCII.GetString(bytes,0,received);
+            NeuralNetworkCom neuralNetworkCom = JsonConvert.DeserializeObject<NeuralNetworkCom>(jsonCom);
+            SendOk(stream);
+            var  X = BuildMatrix(streamReader,stream,streamXValue,neuralNetworkCom.XDataSize);
+            SendOk(stream);
+            var y = BuildMatrix(streamReader,stream,streamYValue, neuralNetworkCom.YDataSize);
+            SendOk(stream);
             return new NeuralNetwork
             {
-                InputLayerSize = InputLayerSize,
-                HiddenLayerSize = HiddenLayerSize,
-                HiddenLayerLength = HiddenLayerLength,
-                OutputLayerSize = OutputLayerSize,
-                TrainingSize = TrainingSize,
-                Lambda = Lambda,
-                Epoch = Epoch,
+                InputLayerSize = neuralNetworkCom.InputLayerSize,
+                HiddenLayerSize = neuralNetworkCom.HiddenLayerSize,
+                HiddenLayerLength = neuralNetworkCom.HiddenLayerLength,
+                OutputLayerSize = neuralNetworkCom.OutputLayerSize,
+                TrainingSize = neuralNetworkCom.TrainingSize,
+                Lambda = neuralNetworkCom.Lambda,
+                Epoch = neuralNetworkCom.Epoch,
                 X = X,
                 y = y
             };
-
         }
 
-        public static Matrix<double> BuildMatrix(StreamReader streamReader,StreamWriter streamWrite)
+        private static void SendOk(Stream stream)
         {
+            var bytes = Encoding.ASCII.GetBytes("Ok");
+            stream.Write(bytes, 0, bytes.Length);
+        }
 
-            int filesize = int.Parse(streamReader.ReadLine());
-            char[] buffer = new char[1024];
+
+
+
+        public static Matrix<double> BuildMatrix(StreamReader streamReader,Stream stream,StreamWriter streamWrite,int filesize)
+        {
+            var buffer = new byte[1024];
             var lines = new List<double[]>();
             int size = 0;
-            int num;
+            int bytesRec;
             StringBuilder stringBuilder = new StringBuilder(filesize);
-            while (size < (filesize) && (num = streamReader.Read(buffer, 0, buffer.Length)) != 0)
+            while (size < (filesize) && (bytesRec = stream.Read(buffer, 0, 1024)) != 0)
             {
-                streamWrite.Write(new String(buffer, 0, num));
-                stringBuilder.Append(buffer, 0, num);
-                size += num;
+
+                String msg = Encoding.ASCII.GetString(buffer, 0, bytesRec);
+                stringBuilder.Append(msg, 0, bytesRec);
+                size += bytesRec;
             }
             //Console.Write(stringBuilder.ToString());
 
