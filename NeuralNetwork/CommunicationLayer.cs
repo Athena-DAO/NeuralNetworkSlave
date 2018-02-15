@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -74,24 +75,14 @@ namespace NeuralNetwork
                 stringBuilder.Append(msg, 0, bytesReceived);
                 receivedSize += bytesReceived;
             }
-            //Console.Write(stringBuilder.ToString());
-
-            var temp = stringBuilder.ToString().Replace("\r", "");
-            var Data = temp.Split("\n");
-            Console.WriteLine("DataLength =" + Data.Length);
+            var Data = stringBuilder.ToString().Split("\n");
             for (int i = 0; i < Data.Length; i++)
             {
                 string[] line = Data[i].Split(',');
-                var lineValues = new double[line.Length];
-                for (int j = 0; j < line.Length; j++)
-                {
-                    lineValues[j] = double.Parse(line[j]);
-                }
+                var lineValues = line.Select(e => Convert.ToDouble(e)).ToArray();
                 lines.Add(lineValues);
             }
-
             var data = lines.ToArray();
-
             return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
         }
 
