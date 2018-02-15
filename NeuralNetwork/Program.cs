@@ -47,116 +47,26 @@ namespace NeuralNetwork
             stream.Close();
         }
         
-        
         public static void Main(string[] args)
-        {
-            TcpListener tcpListener;
-            var Ip = new Byte[4] { 127, 0, 0, 1 };
-
+        {          
             Console.WriteLine("Enter The port number");
             int portNo = int.Parse(Console.ReadLine());
-            tcpListener = new TcpListener(new IPAddress(Ip), portNo);
-            tcpListener.Start();
-            Socket socket = tcpListener.AcceptSocket();
-            Console.WriteLine("Connected to  {0}", socket.RemoteEndPoint);
-            try
-            {
-                Stream stream = new NetworkStream(socket);
-
-                StreamReader streamReader = new StreamReader(stream);
-                StreamWriter streamWriter = new StreamWriter(stream);
-                string fileAppend = $"{DateTime.UtcNow:yyyyMMddHHmmssfff}";
-                StreamWriter streamXValue = new StreamWriter(fileAppend + "_X_value" + socket.RemoteEndPoint.ToString().Split(":")[1]+".csv");
-                StreamWriter streamYValue = new StreamWriter(fileAppend + "_Y_value" + socket.RemoteEndPoint.ToString().Split(":")[1] +".csv");
-                streamWriter.AutoFlush = true;
-
-                var neuralNetwork = BuildNeuralNetwork(streamReader,stream,streamXValue,streamYValue);
+            CommunicationLayer communicationLayer = new CommunicationLayer(portNo);
+            try {
+                communicationLayer.AcceptConnection();
+                var neuralNetwork = communicationLayer.BuildNeuralNetwork();
                 neuralNetwork.InitializeTheta();
-                neuralNetwork.Train();
-                streamWriter.WriteLine("Success");
-                Console.Read();
+                neuralNetwork.Train();              
             }
             catch (Exception E)
             {
-                Console.WriteLine(E);
-                var x = Console.ReadLine();
+                Console.WriteLine(E);               
             }
             finally
             {
-                socket.Close();
-            }
-        }
-        
- 
-        public static NeuralNetwork BuildNeuralNetwork(StreamReader streamReader,Stream stream,StreamWriter streamXValue , StreamWriter streamYValue)
-        {
-
-            var bytes = new byte[1024];
-
-            int received=stream.Read(bytes, 0, 1024);
-            string jsonCom = Encoding.ASCII.GetString(bytes,0,received);
-            NeuralNetworkCom neuralNetworkCom = JsonConvert.DeserializeObject<NeuralNetworkCom>(jsonCom);
-            SendOk(stream);
-            var  X = BuildMatrix(streamReader,stream,streamXValue,neuralNetworkCom.XDataSize);
-            SendOk(stream);
-            var y = BuildMatrix(streamReader,stream,streamYValue, neuralNetworkCom.YDataSize);
-            SendOk(stream);
-            return new NeuralNetwork
-            {
-                InputLayerSize = neuralNetworkCom.InputLayerSize,
-                HiddenLayerSize = neuralNetworkCom.HiddenLayerSize,
-                HiddenLayerLength = neuralNetworkCom.HiddenLayerLength,
-                OutputLayerSize = neuralNetworkCom.OutputLayerSize,
-                TrainingSize = neuralNetworkCom.TrainingSize,
-                Lambda = neuralNetworkCom.Lambda,
-                Epoch = neuralNetworkCom.Epoch,
-                X = X,
-                y = y
-            };
-        }
-
-        private static void SendOk(Stream stream)
-        {
-            var bytes = Encoding.ASCII.GetBytes("Ok");
-            stream.Write(bytes, 0, bytes.Length);
-        }
-
-
-
-
-        public static Matrix<double> BuildMatrix(StreamReader streamReader,Stream stream,StreamWriter streamWrite,int filesize)
-        {
-            var buffer = new byte[1024];
-            var lines = new List<double[]>();
-            int size = 0;
-            int bytesRec;
-            StringBuilder stringBuilder = new StringBuilder(filesize);
-            while (size < (filesize) && (bytesRec = stream.Read(buffer, 0, 1024)) != 0)
-            {
-
-                String msg = Encoding.ASCII.GetString(buffer, 0, bytesRec);
-                stringBuilder.Append(msg, 0, bytesRec);
-                size += bytesRec;
-            }
-            //Console.Write(stringBuilder.ToString());
-
-            var temp = stringBuilder.ToString().Replace("\r", "");
-            var Data = temp.Split("\n");
-            Console.WriteLine("DataLength =" + Data.Length);
-            for (int i = 0; i < Data.Length; i++)
-            {
-                string[] line = Data[i].Split(',');
-                var lineValues = new double[line.Length];
-                for (int j = 0; j < line.Length; j++)
-                {
-                    lineValues[j] = double.Parse(line[j]);
-                }
-                lines.Add(lineValues);
+                communicationLayer.Close();
             }
 
-            var data = lines.ToArray();
-            
-            return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
         }
 
       /*
