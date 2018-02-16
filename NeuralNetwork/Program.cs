@@ -54,7 +54,8 @@ namespace NeuralNetwork
             CommunicationLayer communicationLayer = new CommunicationLayer(portNo);
             try {
                 communicationLayer.AcceptConnection();
-                var neuralNetwork = communicationLayer.BuildNeuralNetwork();
+                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationLayer); 
+                var neuralNetwork = middleLayer.BuildNeuralNetwork();
                 neuralNetwork.InitializeTheta();
                 neuralNetwork.Train();              
             }

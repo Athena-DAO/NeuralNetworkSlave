@@ -36,32 +36,18 @@ namespace NeuralNetwork
             Console.WriteLine("Connected to  {0}", socket.RemoteEndPoint);
             stream = new NetworkStream(socket);
         }
-        public NeuralNetwork BuildNeuralNetwork()
+
+
+        public String GetJSONData()
         {
             var bytes = new byte[1024];
             int received = stream.Read(bytes, 0, 1024);
-            string jsonCom = Encoding.ASCII.GetString(bytes, 0, received);
-            NeuralNetworkParameters neuralNetworkParameters = JsonConvert.DeserializeObject<NeuralNetworkParameters>(jsonCom);
             SendOk();
-            var X = BuildMatrix(neuralNetworkParameters.XDataSize);
-            SendOk();
-            var y = BuildMatrix(neuralNetworkParameters.YDataSize);
-            SendOk();
-            return new NeuralNetwork
-            {
-                InputLayerSize = neuralNetworkParameters.InputLayerSize,
-                HiddenLayerSize = neuralNetworkParameters.HiddenLayerSize,
-                HiddenLayerLength = neuralNetworkParameters.HiddenLayerLength,
-                OutputLayerSize = neuralNetworkParameters.OutputLayerSize,
-                TrainingSize = neuralNetworkParameters.TrainingSize,
-                Lambda = neuralNetworkParameters.Lambda,
-                Epoch = neuralNetworkParameters.Epoch,
-                X = X,
-                y = y
-            };
+            return Encoding.ASCII.GetString(bytes, 0, received);
         }
 
-        public Matrix<double> BuildMatrix(int filesize)
+
+        public double[][] GetDataSet(int filesize)
         {
             var buffer = new byte[1024];
             var lines = new List<double[]>();
@@ -75,6 +61,7 @@ namespace NeuralNetwork
                 stringBuilder.Append(msg, 0, bytesReceived);
                 receivedSize += bytesReceived;
             }
+            SendOk();
             var Data = stringBuilder.ToString().Split("\n");
             for (int i = 0; i < Data.Length; i++)
             {
@@ -82,8 +69,7 @@ namespace NeuralNetwork
                 var lineValues = line.Select(e => Convert.ToDouble(e)).ToArray();
                 lines.Add(lineValues);
             }
-            var data = lines.ToArray();
-            return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
+            return lines.ToArray();
         }
 
         public void Close()
