@@ -56,8 +56,8 @@ namespace NeuralNetwork
                 communicationLayer.AcceptConnection();
                 NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationLayer); 
                 var neuralNetwork = middleLayer.BuildNeuralNetwork();
-                neuralNetwork.InitializeTheta();
-                neuralNetwork.Train();              
+                neuralNetwork.Train();
+                middleLayer.SendTheta(neuralNetwork.Theta);
             }
             catch (Exception E)
             {
@@ -69,20 +69,24 @@ namespace NeuralNetwork
             }
 
         }
-
-      /*
+        /*
+        
         private static void Main(string[] args)
         {
-            var Theta1 = ReadCsv("Theta1_value.csv");
-            var Theta2 = ReadCsv("Theta2_value.csv");
+            var Theta1 = ReadCsv("Theta0.csv");
+            var Theta2 = ReadCsv("Theta1.csv");
             var X = ReadCsv("X_value.csv");
             var y = ReadCsv("Y_value.csv");
             var x_Test = ReadCsv("X_predict.csv");
 
+            var Theta = new Matrix<double>[2];
+            Theta[0] = Theta1;
+            Theta[1] = Theta2;
             NeuralNetwork neuralNetwork = new NeuralNetwork()
             {
                 X = X,
                 y = y,
+                Theta = Theta,
                 InputLayerSize = 400,
                 HiddenLayerSize = 25,
                 HiddenLayerLength = 1,
@@ -91,16 +95,20 @@ namespace NeuralNetwork
                 Lambda = 3,
                 Epoch = 50
             };
+            var t = neuralNetwork.Cost();
+            Console.WriteLine("Cost=", t);
+           
             neuralNetwork.InitializeTheta();
             //neuralNetwork.ReadParams(Theta, X, y);
             neuralNetwork.Train();
 
-            double[] predictions = neuralNetwork.predict(x_Test);
+            double[] predictions = neuralNetwork.Predict(x_Test);
 
             WriteCsv("TrainedTheta1.csv", neuralNetwork.Theta[0]);
             WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
-        */
+        
+      */
     }
 }

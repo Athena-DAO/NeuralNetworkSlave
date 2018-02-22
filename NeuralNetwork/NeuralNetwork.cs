@@ -152,6 +152,9 @@ namespace NeuralNetwork
 
         public int Train()
         {
+            if (Theta == null)
+                InitializeTheta();
+
             double epsg = 0.0000000001;
             double epsf = 0;
             double epsx = 0;
@@ -239,7 +242,7 @@ namespace NeuralNetwork
             return thetaPack;
         }
 
-        public double[] predict(Matrix<double> X)
+        public double[] Predict(Matrix<double> X)
         {
             Matrix<double>[] Activation;
             Matrix<double>[] ActivationWithBias;

@@ -38,7 +38,7 @@ namespace NeuralNetwork
         }
 
 
-        public String GetJSONData()
+        public String ReceiveData()
         {
             var bytes = new byte[1024];
             int received = stream.Read(bytes, 0, 1024);
@@ -46,8 +46,14 @@ namespace NeuralNetwork
             return Encoding.ASCII.GetString(bytes, 0, received);
         }
 
+        public void SendData(String str)
+        {
+            var bytes = Encoding.ASCII.GetBytes(str);
+            stream.Write(bytes, 0, bytes.Length);
+            ReceiveOk();
+        }
 
-        public double[][] GetDataSet(int filesize)
+        public double[][] ReceiveDataSet(int filesize)
         {
             var buffer = new byte[1024];
             var lines = new List<double[]>();
@@ -72,6 +78,22 @@ namespace NeuralNetwork
             return lines.ToArray();
         }
 
+        public void SendDataSet(String dataSet)
+        {
+            int i = 0;
+            int rem = dataSet.Length % 1024;
+            while (i < (dataSet.Length - 1024))
+            {
+                byte[] msg = Encoding.ASCII.GetBytes(dataSet.Substring(i, 1024));
+                stream.Write(msg, 0, 1024);
+                i += 1024;
+            }
+            byte[] msg2 = Encoding.ASCII.GetBytes(dataSet.Substring(i, rem));
+            stream.Write(msg2, 0, msg2.Length);
+            ReceiveOk();
+        }
+
+
         public void Close()
         {
             socket.Close();
@@ -81,6 +103,17 @@ namespace NeuralNetwork
         {
             var bytes = Encoding.ASCII.GetBytes("Ok");
             stream.Write(bytes, 0, bytes.Length);
+        }
+
+        private void ReceiveOk()
+        {
+            var recBytes = new byte[2];
+            stream.Read(recBytes, 0, recBytes.Length);
+
+            if (!(Encoding.ASCII.GetString(recBytes) == "Ok"))
+            {
+                throw new Exception("Ok Not received");
+            }
         }
     }
 }
