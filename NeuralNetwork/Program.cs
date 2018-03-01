@@ -48,10 +48,9 @@ namespace NeuralNetwork
         }
         
         public static void Main(string[] args)
-        {          
-            Console.WriteLine("Enter The port number");
-            int portNo = int.Parse(Console.ReadLine());
-            CommunicationLayer communicationLayer = new CommunicationLayer(portNo);
+        {
+            var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]); 
+            CommunicationLayer communicationLayer = new CommunicationLayer(communicationParameters.Port);
             try {
                 communicationLayer.AcceptConnection();
                 NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationLayer); 

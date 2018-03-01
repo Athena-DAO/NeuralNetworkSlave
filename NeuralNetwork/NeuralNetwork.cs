@@ -18,7 +18,7 @@ namespace NeuralNetwork
         public Matrix<double> X { get; set; }
         public Matrix<double> y { get; set; }
 
-        // public Matrix<double>[] Theta;
+        //public Matrix<double>[] Theta;
         //private Matrix<double> X;
         //private Matrix<double> y;
         private alglib.minlbfgsstate state;
