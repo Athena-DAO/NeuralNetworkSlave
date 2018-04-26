@@ -8,17 +8,17 @@ namespace NeuralNetwork
     class NeuralNetworkMiddleLayer
     {
 
-        private CommunicationLayer communicationLayer;
+        private CommunicationModule communicationModule;
 
-        public NeuralNetworkMiddleLayer(CommunicationLayer communicationLayer)
+        public NeuralNetworkMiddleLayer(CommunicationModule communicationLayer)
         {
-            this.communicationLayer = communicationLayer;
+            this.communicationModule = communicationLayer;
         }
 
 
         public NeuralNetwork BuildNeuralNetwork()
         {
-            var json = communicationLayer.ReceiveData();
+            var json = communicationModule.ReceiveData();
             NeuralNetworkParameters neuralNetworkParameters = JsonConvert.DeserializeObject<NeuralNetworkParameters>(json);
 
              var X = BuildMatrix(neuralNetworkParameters.XDataSize);
@@ -66,14 +66,14 @@ namespace NeuralNetwork
            }
 
             var thetaJson = JsonConvert.SerializeObject(thetaSend);
-            communicationLayer.SendData(thetaJson.Length.ToString());
-            communicationLayer.SendDataSet(thetaJson);
+            communicationModule.SendData(thetaJson.Length.ToString());
+            communicationModule.SendDataSet(thetaJson);
 
         }
 
         public Matrix<double> BuildMatrix(int filesize)
         {
-            var data = communicationLayer.ReceiveDataSet(filesize);
+            var data = communicationModule.ReceiveDataSet(filesize);
             return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
         }
     }

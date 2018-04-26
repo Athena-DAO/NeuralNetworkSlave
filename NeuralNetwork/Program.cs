@@ -49,11 +49,24 @@ namespace NeuralNetwork
         
         public static void Main(string[] args)
         {
-            var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]); 
-            CommunicationLayer communicationLayer = new CommunicationLayer(communicationParameters.Port);
+            //var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]); 
+            string pipelineId = args[1];
+
+            CommunicationsLayer communicationLayer = new CommunicationsLayer()
+            {
+                PipelineId = pipelineId
+            };
+            communicationLayer.SendCommunicationServerParameters();
+            IPEndPoint remoteEndPoint = communicationLayer.GetPeerIPEndPoint();
+            IPEndPoint localEndPoint = communicationLayer.server.client.Client.LocalEndPoint as IPEndPoint;
+           // communicationLayer.server.Close();
+
+            TcpHole tcpHole = new TcpHole();
+            TcpClient tcpClient = tcpHole.PunchHole(localEndPoint, remoteEndPoint);
+            CommunicationModule communicationModule = new CommunicationModule(tcpClient);
             try {
-                communicationLayer.AcceptConnection();
-                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationLayer); 
+                
+                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationModule); 
                 var neuralNetwork = middleLayer.BuildNeuralNetwork();
                 neuralNetwork.Train();
                 middleLayer.SendTheta(neuralNetwork.Theta);
@@ -62,12 +75,10 @@ namespace NeuralNetwork
             {
                 Console.WriteLine(E);               
             }
-            finally
-            {
-                communicationLayer.Close();
-            }
+          
 
         }
+        
         /*
         
         private static void Main(string[] args)
