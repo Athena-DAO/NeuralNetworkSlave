@@ -8,25 +8,35 @@ namespace NeuralNetwork
     public class TcpHole
     {
         public TcpClient client { get; set; }
+        public int Count = 0;
+        public bool Success = false;
         public void Connect(IPEndPoint peerRemoteEndPoint)
         {
-           
+
             while (true)
             {
                 try
                 {
                     client.Connect(peerRemoteEndPoint);
+                    Success = true;
                     break;
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Attempt {0}", e);
-                    continue;
+                    if (Count <= 3)
+                    {
+                        Count++;
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
         }
 
-        public TcpClient PunchHole(IPEndPoint localEndPoint ,IPEndPoint peerRemoteEndPoint)
+        public TcpClient PunchHole(IPEndPoint localEndPoint, IPEndPoint peerRemoteEndPoint)
         {
             client = new TcpClient(localEndPoint);
             Connect(peerRemoteEndPoint);

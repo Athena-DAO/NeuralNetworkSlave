@@ -1,12 +1,11 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
+using NeuralNetwork.Communication;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 
 namespace NeuralNetwork
 {
@@ -46,10 +45,10 @@ namespace NeuralNetwork
             }
             stream.Close();
         }
-        
+        /*
         public static void Main(string[] args)
         {
-            //var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]); 
+            //var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]);
             string pipelineId = args[1];
 
             CommunicationsLayer communicationLayer = new CommunicationsLayer()
@@ -57,30 +56,57 @@ namespace NeuralNetwork
                 PipelineId = pipelineId
             };
             communicationLayer.SendCommunicationServerParameters();
-            IPEndPoint remoteEndPoint = communicationLayer.GetPeerIPEndPoint();
-            IPEndPoint localEndPoint = communicationLayer.server.client.Client.LocalEndPoint as IPEndPoint;
-           // communicationLayer.server.Close();
 
-            TcpHole tcpHole = new TcpHole();
-            TcpClient tcpClient = tcpHole.PunchHole(localEndPoint, remoteEndPoint);
-            CommunicationModule communicationModule = new CommunicationModule(tcpClient);
-            try {
-                
-                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationModule); 
+            var response = communicationLayer.GetCommunicationResonse();
+            bool P2pSuccess = false;
+            if (response.P2P)
+            {
+                IPEndPoint remoteEndPoint = communicationLayer.GetIpEndPoint(response.EndPoint);
+                IPEndPoint localEndPoint = communicationLayer.server.client.Client.LocalEndPoint as IPEndPoint;
+                communicationLayer.server.Close();
+                try
+                {
+                    TcpHole tcpHole = new TcpHole();
+                    TcpClient tcpClient = tcpHole.PunchHole(localEndPoint, remoteEndPoint);
+
+                    if (!tcpHole.Success)
+                    {
+                        throw new Exception("Hole Punching Failed");
+                    }
+
+                    CommunicationModule communicationModule = new CommunicationModule(tcpClient);
+                    NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer() { communicationModule = communicationModule , P2P =true};
+                    var neuralNetwork = middleLayer.BuildNeuralNetwork();
+                    neuralNetwork.Train();
+                    middleLayer.SendTheta(neuralNetwork.Theta);
+                    P2pSuccess = true;
+                }
+                catch (Exception E)
+                {
+                    if(E.Message!= "Hole Punching Failed")
+                    {
+                        throw;
+                    }
+                }
+            }
+
+
+            if (!P2pSuccess)
+            {
+
+                CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "m2s" };
+                CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "s2m" };
+                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer() { CommunicationRabbitMqM2s = communicationM2s , CommunicationRabbitMqS2M=communicationS2m , P2P= false };
                 var neuralNetwork = middleLayer.BuildNeuralNetwork();
                 neuralNetwork.Train();
                 middleLayer.SendTheta(neuralNetwork.Theta);
-            }
-            catch (Exception E)
-            {
-                Console.WriteLine(E);               
-            }
-          
 
+
+            }
         }
+        */
         
-        /*
-        
+
         private static void Main(string[] args)
         {
             var Theta1 = ReadCsv("Theta0.csv");
@@ -107,7 +133,7 @@ namespace NeuralNetwork
             };
             var t = neuralNetwork.Cost();
             Console.WriteLine("Cost=", t);
-           
+
             neuralNetwork.InitializeTheta();
             //neuralNetwork.ReadParams(Theta, X, y);
             neuralNetwork.Train();
@@ -118,7 +144,7 @@ namespace NeuralNetwork
             WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
-        
-      */
+
+      
     }
 }

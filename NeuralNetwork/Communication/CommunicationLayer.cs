@@ -4,6 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using RabbitMQ.Client;
+using NeuralNetwork.Communication;
+using NeuralNetwork.Model;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace NeuralNetwork
 {
@@ -11,9 +16,22 @@ namespace NeuralNetwork
     {
         public CommunicationModule server { get; set; }
         public string PipelineId { get; set; }
+        public IConfiguration Configuration { get; set; }
+
         public CommunicationsLayer()
         {
-            server = new CommunicationModule("192.168.1.2", 6000);
+            BuildConfiguration();
+            server = new CommunicationModule($"{Configuration["Ip-CommunicationServer"]}", int.Parse($"{Configuration["Port-CommunicationServer"]}"));
+        }
+
+        public void BuildConfiguration()
+        {
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json");
+            Configuration = builder.Build();
+        }
+        public CommunicationResponse GetCommunicationResonse()
+        {
+            return JsonConvert.DeserializeObject<CommunicationResponse>(server.ReceiveData());
         }
 
         public void SendCommunicationServerParameters()
@@ -25,6 +43,8 @@ namespace NeuralNetwork
             }));
 
         }
+
+
 
         public IPEndPoint GetPeerIPEndPoint()
         {

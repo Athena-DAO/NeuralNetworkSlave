@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  neuralnetwork:
+    image: neuralnetwork
+    build:
+      context: .
+      dockerfile: NeuralNetwork\Dockerfile

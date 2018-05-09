@@ -108,7 +108,7 @@ namespace NeuralNetwork
 
         public void Close()
         {
-            socket.Close();
+            client.Close();
         }
 
         private void SendOk()
