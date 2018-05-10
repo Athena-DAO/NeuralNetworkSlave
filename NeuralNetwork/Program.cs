@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using NeuralNetwork.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -59,7 +60,7 @@ namespace NeuralNetwork
             communicationLayer.SendCommunicationServerParameters();
             IPEndPoint remoteEndPoint = communicationLayer.GetPeerIPEndPoint();
             IPEndPoint localEndPoint = communicationLayer.server.client.Client.LocalEndPoint as IPEndPoint;
-           // communicationLayer.server.Close();
+            communicationLayer.server.Close();
 
             TcpHole tcpHole = new TcpHole();
             TcpClient tcpClient = tcpHole.PunchHole(localEndPoint, remoteEndPoint);
@@ -68,6 +69,7 @@ namespace NeuralNetwork
                 
                 NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer(communicationModule); 
                 var neuralNetwork = middleLayer.BuildNeuralNetwork();
+                var loggingService = new LoggingService();                
                 neuralNetwork.Train();
                 middleLayer.SendTheta(neuralNetwork.Theta);
             }

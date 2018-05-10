@@ -15,7 +15,7 @@ namespace NeuralNetwork
         public TcpListener tcpListener;
         public TcpClient client;
         public Socket socket;
-        public Stream stream;
+        public Stream stream { get; set; }
             
         public CommunicationModule(String ip, int port)
         {
