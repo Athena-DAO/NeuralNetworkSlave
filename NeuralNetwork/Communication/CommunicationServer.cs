@@ -12,16 +12,16 @@ using System.IO;
 
 namespace NeuralNetwork
 {
-    class CommunicationsLayer
+    class CommunicationsServer
     {
-        public CommunicationModule server { get; set; }
+        public CommunicationTcp server { get; set; }
         public string PipelineId { get; set; }
         public IConfiguration Configuration { get; set; }
 
-        public CommunicationsLayer()
+        public CommunicationsServer()
         {
             BuildConfiguration();
-            server = new CommunicationModule($"{Configuration["Ip-CommunicationServer"]}", int.Parse($"{Configuration["Port-CommunicationServer"]}"));
+            server = new CommunicationTcp($"{Configuration["Ip-CommunicationServer"]}", int.Parse($"{Configuration["Port-CommunicationServer"]}"));
         }
 
         public void BuildConfiguration()

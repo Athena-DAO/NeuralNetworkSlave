@@ -1,6 +1,6 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
-using Microsoft.Extensions.Configuration;
 using NeuralNetwork.Communication;
+using NeuralNetwork.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,25 +45,26 @@ namespace NeuralNetwork
             }
             stream.Close();
         }
-        /*
+        
         public static void Main(string[] args)
         {
-            //var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]);
             string pipelineId = args[1];
 
-            CommunicationsLayer communicationLayer = new CommunicationsLayer()
+            CommunicationsServer communicationServer = new CommunicationsServer()
             {
                 PipelineId = pipelineId
             };
-            communicationLayer.SendCommunicationServerParameters();
+            communicationServer.SendCommunicationServerParameters();
 
-            var response = communicationLayer.GetCommunicationResonse();
+            var response = communicationServer.GetCommunicationResonse();
             bool P2pSuccess = false;
+            NeuralNetworkMiddleLayer middleLayer=null;
+
             if (response.P2P)
             {
-                IPEndPoint remoteEndPoint = communicationLayer.GetIpEndPoint(response.EndPoint);
-                IPEndPoint localEndPoint = communicationLayer.server.client.Client.LocalEndPoint as IPEndPoint;
-                communicationLayer.server.Close();
+                IPEndPoint remoteEndPoint = communicationServer.GetIpEndPoint(response.EndPoint);
+                IPEndPoint localEndPoint = communicationServer.server.client.Client.LocalEndPoint as IPEndPoint;
+                communicationServer.server.Close();
                 try
                 {
                     TcpHole tcpHole = new TcpHole();
@@ -74,39 +75,57 @@ namespace NeuralNetwork
                         throw new Exception("Hole Punching Failed");
                     }
 
-                    CommunicationModule communicationModule = new CommunicationModule(tcpClient);
-                    NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer() { communicationModule = communicationModule , P2P =true};
-                    var neuralNetwork = middleLayer.BuildNeuralNetwork();
-                    neuralNetwork.Train();
-                    middleLayer.SendTheta(neuralNetwork.Theta);
+                    CommunicationTcp communicationTcp = new CommunicationTcp(tcpClient);
+                    middleLayer = new NeuralNetworkMiddleLayer()
+                    {
+                        CommunicationModule = new CommunicationModule()
+                        {
+                            CommunicationTcp = communicationTcp,
+                            P2P = true
+                        }
+                    };
                     P2pSuccess = true;
                 }
                 catch (Exception E)
                 {
-                    if(E.Message!= "Hole Punching Failed")
+                    if (E.Message != "Hole Punching Failed")
                     {
                         throw;
                     }
                 }
             }
 
-
             if (!P2pSuccess)
             {
-
                 CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "m2s" };
                 CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "s2m" };
-                NeuralNetworkMiddleLayer middleLayer = new NeuralNetworkMiddleLayer() { CommunicationRabbitMqM2s = communicationM2s , CommunicationRabbitMqS2M=communicationS2m , P2P= false };
-                var neuralNetwork = middleLayer.BuildNeuralNetwork();
+                middleLayer = new NeuralNetworkMiddleLayer()
+                {
+                    CommunicationModule = new CommunicationModule()
+                    {
+                        CommunicationRabbitMqM2S = communicationM2s,
+                        CommunicationRabbitMqS2M = communicationS2m,
+                        P2P = false
+                    }
+                };
+            }
+            var neuralNetwork = middleLayer.BuildNeuralNetwork();
+            var loggingService = new LogService() { communicationModule = middleLayer.CommunicationModule };
+
+            try
+            {
+                loggingService.StartLogService();
                 neuralNetwork.Train();
+                loggingService.StopLogService();
                 middleLayer.SendTheta(neuralNetwork.Theta);
-
-
+            }catch(Exception e)
+            {
+                loggingService.AddLog("error", "Training Failed");
             }
         }
-        */
         
-
+        
+        /*
         private static void Main(string[] args)
         {
             var Theta1 = ReadCsv("Theta0.csv");
@@ -131,8 +150,8 @@ namespace NeuralNetwork
                 Lambda = 3,
                 Epoch = 50
             };
-            var t = neuralNetwork.Cost();
-            Console.WriteLine("Cost=", t);
+            //var t = neuralNetwork.Cost();
+            //Console.WriteLine("Cost=", t);
 
             neuralNetwork.InitializeTheta();
             //neuralNetwork.ReadParams(Theta, X, y);
@@ -144,7 +163,6 @@ namespace NeuralNetwork
             WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
-
-      
+        */
     }
 }

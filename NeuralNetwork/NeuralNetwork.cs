@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using NeuralNetwork.Logging;
 using System;
 using System.Threading;
 
@@ -18,9 +19,7 @@ namespace NeuralNetwork
         public Matrix<double> X { get; set; }
         public Matrix<double> y { get; set; }
 
-        //public Matrix<double>[] Theta;
-        //private Matrix<double> X;
-        //private Matrix<double> y;
+        public LogService LogService { get; set; }
         private alglib.minlbfgsstate state;
         private double cost;
         private const int SLEEP = 1000;
@@ -163,29 +162,35 @@ namespace NeuralNetwork
             alglib.minlbfgsreport rep;
             alglib.minlbfgscreate(1, thetaUnpack, out state);
             alglib.minlbfgssetcond(state, epsg, epsf, epsx, Epoch);
-            Thread t = new Thread(DisplayCost);
+            Thread logThread = new Thread(LogCost);
             Cost();
-            t.Start();
+            logThread.Start();
             alglib.minlbfgsoptimize(state, Cost, null, null);
             alglib.minlbfgsresults(state, out thetaUnpack, out rep);
             Console.WriteLine("Termination type {0} Iteration Count {1}", rep.terminationtype, rep.iterationscount);
             var theta = PackTheta(thetaUnpack);
             this.Theta = theta;
 
+            while(logThread.IsAlive)
+            {
+                Thread.Sleep(SLEEP);
+            }
             return rep.terminationtype;
         }
 
-        public void DisplayCost()
+        public void LogCost()
         {
             double[] thetaUnpack;
-            alglib.minlbfgsreport rep = new alglib.minlbfgsreport();
+            alglib.minlbfgsreport report = new alglib.minlbfgsreport();
             do
             {
-                alglib.minlbfgsresults(state, out thetaUnpack, out rep);
-                Console.WriteLine("Iteration {0}| Cost {1}", rep.iterationscount, cost);
+                alglib.minlbfgsresults(state, out thetaUnpack, out report);
+                string logMessage = string.Format("Iteration {0}| Cost {1}", report.iterationscount, cost);
+             //   LogService.AddLog("info", logMessage);
+                Console.WriteLine(logMessage);
                 Thread.Sleep(SLEEP);
             }
-            while (rep.iterationscount != (Epoch));
+            while (report.iterationscount != (Epoch));
         }
 
         public double[] UnpackTheta(Matrix<double>[] thetaPacked)

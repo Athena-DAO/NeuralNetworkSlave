@@ -9,22 +9,21 @@ namespace NeuralNetwork
 {
     internal class NeuralNetworkMiddleLayer
     {
-        public CommunicationModule communicationModule{ get; set; }
-        public CommunicationRabbitMq CommunicationRabbitMqM2s { get; set; }
-        public CommunicationRabbitMq CommunicationRabbitMqS2M { get; set; }
-        public bool P2P { get; set; }
+
+        public CommunicationModule CommunicationModule { get; set; }
 
         public NeuralNetwork BuildNeuralNetwork()
         {
-            string json;
+            string json = CommunicationModule.ReceiveData();
+            /*
             if (P2P)
             {
-               json = communicationModule.ReceiveData();
+               json = communicationTcp.ReceiveData();
             }else
             {
                 json = CommunicationRabbitMqM2s.Consume();
             }
-
+            */
             NeuralNetworkParameters neuralNetworkParameters = JsonConvert.DeserializeObject<NeuralNetworkParameters>(json);
             var X = BuildMatrix(neuralNetworkParameters.XDataSize);
             var y = BuildMatrix(neuralNetworkParameters.YDataSize);
@@ -68,32 +67,40 @@ namespace NeuralNetwork
             }
 
             var thetaJson = JsonConvert.SerializeObject(thetaSend);
+
+            CommunicationModule.SendData(thetaJson, true);
+
+            /*
             if (P2P)
             {
-                communicationModule.SendData(thetaJson.Length.ToString());
-                communicationModule.SendDataSet(thetaJson);
+                communicationTcp.SendData(thetaJson.Length.ToString());
+                communicationTcp.SendDataSet(thetaJson);
             }
             else
             {
                 CommunicationRabbitMqS2M.Publish(thetaJson);
             }
+            */
         }
 
         public Matrix<double> BuildMatrix(int filesize)
         {
-            double[][] data;
+            double[][] data = ConvertStringToDataSet(CommunicationModule.ReceiveData(-1));
+
+            /*
             if (P2P)
             {
-                data = communicationModule.ReceiveDataSet(filesize);
+                data = communicationTcp.ReceiveDataSet(filesize);
             }
             else
             {
                 data = BuildDataSet(CommunicationRabbitMqM2s.Consume());
             }
+            */
             return Matrix<double>.Build.Dense(data.Length, data[0].Length, (i, j) => data[i][j]);
         }
 
-        public double[][] BuildDataSet(string str)
+        public double[][] ConvertStringToDataSet(string str)
         {
             var lines = new List<double[]>();
             var Data = str.Split("\n");
