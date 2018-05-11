@@ -1,4 +1,5 @@
 ﻿using MathNet.Numerics.LinearAlgebra;
+using Microsoft.Extensions.Configuration;
 using NeuralNetwork.Communication;
 using NeuralNetwork.Logging;
 using System;
@@ -45,15 +46,23 @@ namespace NeuralNetwork
             }
             stream.Close();
         }
-        
+        public static IConfiguration BuildConfiguration()
+        {
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json");
+            return builder.Build();
+        }
         public static void Main(string[] args)
         {
             string pipelineId = args[1];
 
+            IConfiguration Configuration = BuildConfiguration();
+
             CommunicationsServer communicationServer = new CommunicationsServer()
             {
-                PipelineId = pipelineId
+                PipelineId = pipelineId,
+                Configuration = Configuration
             };
+
             communicationServer.SendCommunicationServerParameters();
 
             var response = communicationServer.GetCommunicationResonse();
@@ -111,17 +120,18 @@ namespace NeuralNetwork
                 };
             }
             var neuralNetwork = middleLayer.BuildNeuralNetwork();
-            var loggingService = new LogService() { communicationModule = middleLayer.CommunicationModule };
-            neuralNetwork.LogService = loggingService;
+            var logService = new LogService() { communicationModule = middleLayer.CommunicationModule };
+            neuralNetwork.LogService = logService;
+            neuralNetwork.Configuration = Configuration;
             try
             {
-                loggingService.StartLogService();
+                logService.StartLogService();
                 neuralNetwork.Train();
-                loggingService.StopLogService();
+                logService.StopLogService();
                 middleLayer.SendTheta(neuralNetwork.Theta);
             }catch(Exception e)
             {
-                loggingService.AddLog("error", "Training Failed");
+                logService.AddLog("error", "Training Failed");
             }
         }
         

@@ -1,4 +1,5 @@
-﻿using NeuralNetwork.Communication;
+﻿using Microsoft.Extensions.Configuration;
+using NeuralNetwork.Communication;
 using NeuralNetwork.Models;
 using Newtonsoft.Json;
 using System;
@@ -12,6 +13,7 @@ namespace NeuralNetwork.Logging
         private Object LogLock;
         
         public CommunicationModule communicationModule { get; set; }
+        public IConfiguration Configuration { get; set; }
         public List<Log> Logs { get; set; }
         private bool stopLogs = false;
 
@@ -34,7 +36,7 @@ namespace NeuralNetwork.Logging
             while (!stopLogs)
             {
                 SendLogs();
-                Thread.Sleep(5000);
+                Thread.Sleep(int.Parse($"{Configuration["log-reporting-time-interval"]}"));
             }
         }
 

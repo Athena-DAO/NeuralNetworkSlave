@@ -4,6 +4,7 @@ using System;
 using System.Threading;
 using Newtonsoft.Json;
 using NeuralNetwork.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace NeuralNetwork
 {
@@ -17,15 +18,18 @@ namespace NeuralNetwork
         public double Lambda { get; set; }
         public int Epoch { get; set; }
 
+
         public Matrix<double>[] Theta { get; set; }
         public Matrix<double> X { get; set; }
         public Matrix<double> y { get; set; }
 
         public LogService LogService { get; set; }
+        public IConfiguration Configuration { get; set; }
+
         private alglib.minlbfgsstate state;
         private double cost;
         private const int SLEEP = 1000;
-
+        
         public NeuralNetwork()
         {
         }
@@ -192,7 +196,7 @@ namespace NeuralNetwork
                     Iteration = report.iterationscount,
                     Cost= cost}));
                 Console.WriteLine("Iteration {0}| Cost {1}", report.iterationscount, cost);
-                Thread.Sleep(SLEEP);
+                Thread.Sleep(int.Parse($"{Configuration["log-generation-time-interval"]}"));
             }
             while (report.iterationscount != (Epoch));
         }
