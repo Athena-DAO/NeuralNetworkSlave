@@ -2,6 +2,8 @@
 using NeuralNetwork.Logging;
 using System;
 using System.Threading;
+using Newtonsoft.Json;
+using NeuralNetwork.Models;
 
 namespace NeuralNetwork
 {
@@ -185,9 +187,11 @@ namespace NeuralNetwork
             do
             {
                 alglib.minlbfgsresults(state, out thetaUnpack, out report);
-                string logMessage = string.Format("Iteration {0}| Cost {1}", report.iterationscount, cost);
-             //   LogService.AddLog("info", logMessage);
-                Console.WriteLine(logMessage);
+                LogService.AddLog("info", JsonConvert.SerializeObject(
+                    new InfoLog() {
+                    Iteration = report.iterationscount,
+                    Cost= cost}));
+                Console.WriteLine("Iteration {0}| Cost {1}", report.iterationscount, cost);
                 Thread.Sleep(SLEEP);
             }
             while (report.iterationscount != (Epoch));
