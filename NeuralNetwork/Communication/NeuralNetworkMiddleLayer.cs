@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace NeuralNetwork
 {
@@ -15,6 +16,7 @@ namespace NeuralNetwork
         public NeuralNetwork BuildNeuralNetwork()
         {
             string json = CommunicationModule.ReceiveData();
+            
             /*
             if (P2P)
             {

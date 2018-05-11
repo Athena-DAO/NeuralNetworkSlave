@@ -10,7 +10,7 @@ namespace NeuralNetwork.Logging
     internal class LogService
     {
         private Object LogLock;
-        public Object communicationModuleLock { get; set; }
+        
         public CommunicationModule communicationModule { get; set; }
         public List<Log> Logs { get; set; }
         private bool stopLogs = false;
@@ -40,8 +40,7 @@ namespace NeuralNetwork.Logging
 
         public void SendLogs()
         {
-            lock (communicationModuleLock)
-            {
+
                 lock (LogLock)
                 {
                     if (Logs.Count > 0)
@@ -50,7 +49,7 @@ namespace NeuralNetwork.Logging
                         Logs.Clear();
                     }
                 }
-            }
+            
         }
 
         public void StartLogService()

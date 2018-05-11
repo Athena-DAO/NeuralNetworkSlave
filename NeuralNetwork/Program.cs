@@ -97,8 +97,9 @@ namespace NeuralNetwork
 
             if (!P2pSuccess)
             {
-                CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "m2s" };
-                CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq() { QueueName = pipelineId + "_" + response.QueueNumber + "s2m" };
+                CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq(queueName: pipelineId + "_" + response.QueueNumber + "m2s" );
+                communicationM2s.StartConsumer();
+                CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq(queueName: pipelineId + "_" + response.QueueNumber + "s2m" );
                 middleLayer = new NeuralNetworkMiddleLayer()
                 {
                     CommunicationModule = new CommunicationModule()
@@ -111,7 +112,7 @@ namespace NeuralNetwork
             }
             var neuralNetwork = middleLayer.BuildNeuralNetwork();
             var loggingService = new LogService() { communicationModule = middleLayer.CommunicationModule };
-
+            neuralNetwork.LogService = loggingService;
             try
             {
                 loggingService.StartLogService();
