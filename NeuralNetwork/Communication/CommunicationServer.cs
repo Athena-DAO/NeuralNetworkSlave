@@ -16,9 +16,8 @@ namespace NeuralNetwork
     {
         public CommunicationTcp server { get; set; }
         public string PipelineId { get; set; }
-        public IConfiguration Configuration { get; set; }
 
-        public CommunicationsServer()
+        public CommunicationsServer(IConfiguration Configuration)
         {
             server = new CommunicationTcp($"{Configuration["ip-communication-server"]}", int.Parse($"{Configuration["port-communication-server"]}"));
         }

@@ -57,10 +57,9 @@ namespace NeuralNetwork
 
             IConfiguration Configuration = BuildConfiguration();
 
-            CommunicationsServer communicationServer = new CommunicationsServer()
+            CommunicationsServer communicationServer = new CommunicationsServer(Configuration)
             {
-                PipelineId = pipelineId,
-                Configuration = Configuration
+                PipelineId = pipelineId
             };
 
             communicationServer.SendCommunicationServerParameters();
@@ -106,9 +105,9 @@ namespace NeuralNetwork
 
             if (!P2pSuccess)
             {
-                CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq(queueName: pipelineId + "_" + response.QueueNumber + "m2s" );
+                CommunicationRabbitMq communicationM2s = new CommunicationRabbitMq (pipelineId + "_" + response.QueueNumber + "m2s" ,Configuration);
                 communicationM2s.StartConsumer();
-                CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq(queueName: pipelineId + "_" + response.QueueNumber + "s2m" );
+                CommunicationRabbitMq communicationS2m = new CommunicationRabbitMq(pipelineId + "_" + response.QueueNumber + "s2m" ,Configuration);
                 middleLayer = new NeuralNetworkMiddleLayer()
                 {
                     CommunicationModule = new CommunicationModule()
@@ -120,7 +119,7 @@ namespace NeuralNetwork
                 };
             }
             var neuralNetwork = middleLayer.BuildNeuralNetwork();
-            var logService = new LogService() { communicationModule = middleLayer.CommunicationModule };
+            var logService = new LogService() { communicationModule = middleLayer.CommunicationModule ,Configuration=Configuration};
             neuralNetwork.LogService = logService;
             neuralNetwork.Configuration = Configuration;
             try
@@ -133,6 +132,7 @@ namespace NeuralNetwork
             {
                 logService.AddLog("error", "Training Failed");
             }
+            middleLayer.CommunicationModule.Close();
         }
         
         

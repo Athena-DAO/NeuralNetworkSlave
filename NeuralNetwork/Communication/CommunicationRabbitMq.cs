@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Microsoft.Extensions.Configuration;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Collections.Generic;
@@ -17,12 +18,17 @@ namespace NeuralNetwork.Communication
         private List<string> Messages;
         private Object messageLock;
 
-        public CommunicationRabbitMq(string queueName)
+        public CommunicationRabbitMq(string queueName, IConfiguration Configuration)
         {
 
             QueueName = queueName;
             messageLock = new object();
-            factory = new ConnectionFactory() { HostName = "localhost" };
+            factory = new ConnectionFactory()
+            {
+                HostName = $"{Configuration["ip-rabbit-mq"]}",
+                UserName = $"{Configuration["username-rabbit-mq"]}",
+                Password = $"{Configuration["password-rabbit-mq"]}"
+            };
             connection = factory.CreateConnection();
             channel = connection.CreateModel();
             channel.QueueDeclare(queue: QueueName,
