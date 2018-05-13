@@ -2,7 +2,7 @@
   "profiles": {
     "NeuralNetwork": {
       "commandName": "Project",
-      "commandLineArgs": "abc 1234"
+      "commandLineArgs": "http://athena.a2hosted.com 8F9819FB-F718-4B39-A266-928014AED9AA"
     }
   }
 }

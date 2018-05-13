@@ -1,8 +1,8 @@
-version: '3'
+version: '3.4'
 
 services:
   neuralnetwork:
-    image: neuralnetwork
+    image: ${DOCKER_REGISTRY}neuralnetwork
     build:
       context: .
-      dockerfile: NeuralNetwork\Dockerfile
+      dockerfile: NeuralNetwork/Dockerfile
