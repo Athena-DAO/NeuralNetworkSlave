@@ -51,7 +51,7 @@ namespace NeuralNetwork
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json");
             return builder.Build();
         }
-        /*
+        
         public static void Main(string[] args)
         {
             string pipelineId = args[1];
@@ -135,9 +135,9 @@ namespace NeuralNetwork
             }
             middleLayer.CommunicationModule.Close();
         }
-        */
         
         
+        /*
         private static void Main(string[] args)
         {
             //var Theta1 = ReadCsv("Theta0.csv");
@@ -177,6 +177,6 @@ namespace NeuralNetwork
            // WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
-     
+     */
     }
 }
