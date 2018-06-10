@@ -144,6 +144,7 @@ namespace NeuralNetwork
             //var Theta2 = ReadCsv("Theta1.csv");
             var X = ReadCsv("X_value.csv");
             var y = ReadCsv("Y_value.csv");
+            IConfiguration Configuration = BuildConfiguration();
             //var x_Test = ReadCsv("X_predict.csv");
 
             var Theta = new Matrix<double>[2];
@@ -158,7 +159,9 @@ namespace NeuralNetwork
                 OutputLayerSize = 10,
                 TrainingSize = 5000,
                 Lambda = 3,
-                Epoch = 50
+                Epoch = 50,
+                Configuration = Configuration
+                
             };
 
             //var t = neuralNetwork.Cost();

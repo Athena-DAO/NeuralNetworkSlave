@@ -30,7 +30,7 @@ namespace NeuralNetwork
         private double cost;
         private const int SLEEP = 1000;
         private bool trainingCompleted = false;
-        private int iterationCount = 0;
+        private int epochCount = 0;
         public NeuralNetwork()
         {
         }
@@ -136,7 +136,7 @@ namespace NeuralNetwork
                 ).ColumnSums().Sum() + regularization;
 
             this.cost = cost;
-            iterationCount++;
+            epochCount++;
 
             //Calculating gradient at the output layer
             Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
@@ -189,16 +189,17 @@ namespace NeuralNetwork
 
         public void LogCost()
         {
+            double[] thetaUnpack;
+            alglib.minlbfgsreport report = new alglib.minlbfgsreport();
             do
             {
-                int itCount = iterationCount;
+                alglib.minlbfgsresults(state, out thetaUnpack, out report);
 
-                //LogService.AddLog("info", JsonConvert.SerializeObject(
-                //    new InfoLog() {
-                //    Iteration = itCount,
-                //    Cost= cost}));
-
-                Console.WriteLine("Iteration {0}| Cost {1}", itCount, cost);
+                LogService.AddLog("info", JsonConvert.SerializeObject(
+                    new InfoLog() {
+                    Iteration = report.iterationscount,
+                    Cost= cost}));
+                Console.WriteLine("Iteration {0}| Cost {1}", report.iterationscount, cost);
                 Thread.Sleep(int.Parse($"{Configuration["log-generation-time-interval"]}"));
             }
             while (!trainingCompleted);
