@@ -47,7 +47,7 @@ namespace NeuralNetwork
             }
             stream.Close();
         }
-        
+        /*
         public static void Main(string[] args)
         {
             //var communicationParameters = JsonConvert.DeserializeObject<CommunicationParameters>(args[1]); 
@@ -80,20 +80,19 @@ namespace NeuralNetwork
           
 
         }
+        */
         
-        /*
         
         private static void Main(string[] args)
         {
-            var Theta1 = ReadCsv("Theta0.csv");
-            var Theta2 = ReadCsv("Theta1.csv");
+
             var X = ReadCsv("X_value.csv");
             var y = ReadCsv("Y_value.csv");
-            var x_Test = ReadCsv("X_predict.csv");
+          //  var x_Test = ReadCsv("X_predict.csv");
 
             var Theta = new Matrix<double>[2];
-            Theta[0] = Theta1;
-            Theta[1] = Theta2;
+            //Theta[0] = Theta1;
+            //Theta[1] = Theta2;
             NeuralNetwork neuralNetwork = new NeuralNetwork()
             {
                 X = X,
@@ -101,12 +100,13 @@ namespace NeuralNetwork
                 Theta = Theta,
                 InputLayerSize = 400,
                 HiddenLayerSize = 25,
-                HiddenLayerLength = 1,
+                HiddenLayerLength = 2,
                 OutputLayerSize = 10,
                 TrainingSize = 5000,
                 Lambda = 3,
                 Epoch = 50
             };
+            neuralNetwork.InitializeTheta();
             var t = neuralNetwork.Cost();
             Console.WriteLine("Cost=", t);
            
@@ -114,13 +114,13 @@ namespace NeuralNetwork
             //neuralNetwork.ReadParams(Theta, X, y);
             neuralNetwork.Train();
 
-            double[] predictions = neuralNetwork.Predict(x_Test);
+          //  double[] predictions = neuralNetwork.Predict(x_Test);
 
             WriteCsv("TrainedTheta1.csv", neuralNetwork.Theta[0]);
             WriteCsv("TrainedTheta2.csv", neuralNetwork.Theta[1]);
             Console.ReadLine();
         }
         
-      */
+      
     }
 }

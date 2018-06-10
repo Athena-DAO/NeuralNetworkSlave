@@ -35,7 +35,7 @@ namespace NeuralNetwork
             Theta[0] = Matrix<double>.Build.Random(HiddenLayerSize, InputLayerSize + 1);
             Theta[HiddenLayerLength] = Matrix<double>.Build.Random(OutputLayerSize, HiddenLayerSize + 1);
             for (int i = 1; i < HiddenLayerLength; i++)
-                Theta[i] = Matrix<double>.Build.Random(HiddenLayerSize + 1, HiddenLayerSize);
+                Theta[i] = Matrix<double>.Build.Random(HiddenLayerSize, HiddenLayerSize+1);
         }
         public void ReadParams(Matrix<double>[] Theta, Matrix<double> X, Matrix<double> y)
         {
