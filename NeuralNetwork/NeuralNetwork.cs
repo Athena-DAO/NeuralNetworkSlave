@@ -29,7 +29,8 @@ namespace NeuralNetwork
         private alglib.minlbfgsstate state;
         private double cost;
         private const int SLEEP = 1000;
-        
+        private bool trainingCompleted = false;
+        private int iterationCount = 0;
         public NeuralNetwork()
         {
         }
@@ -133,7 +134,9 @@ namespace NeuralNetwork
                 (-Y).PointwiseMultiply(Activation[HiddenLayerLength + 1].PointwiseLog()) +
                 (Y - 1).PointwiseMultiply(Activation[HiddenLayerLength + 1].Map(m => (1 - m)).PointwiseLog())
                 ).ColumnSums().Sum() + regularization;
+
             this.cost = cost;
+            iterationCount++;
 
             //Calculating gradient at the output layer
             Delta[HiddenLayerLength] = Activation[HiddenLayerLength + 1] - Y;
@@ -176,7 +179,7 @@ namespace NeuralNetwork
             Console.WriteLine("Termination type {0} Iteration Count {1}", rep.terminationtype, rep.iterationscount);
             var theta = PackTheta(thetaUnpack);
             this.Theta = theta;
-
+            trainingCompleted = true;
             while(logThread.IsAlive)
             {
                 Thread.Sleep(SLEEP);
@@ -186,19 +189,19 @@ namespace NeuralNetwork
 
         public void LogCost()
         {
-            double[] thetaUnpack;
-            alglib.minlbfgsreport report = new alglib.minlbfgsreport();
             do
             {
-                alglib.minlbfgsresults(state, out thetaUnpack, out report);
-                LogService.AddLog("info", JsonConvert.SerializeObject(
-                    new InfoLog() {
-                    Iteration = report.iterationscount,
-                    Cost= cost}));
-                Console.WriteLine("Iteration {0}| Cost {1}", report.iterationscount, cost);
+                int itCount = iterationCount;
+
+                //LogService.AddLog("info", JsonConvert.SerializeObject(
+                //    new InfoLog() {
+                //    Iteration = itCount,
+                //    Cost= cost}));
+
+                Console.WriteLine("Iteration {0}| Cost {1}", itCount, cost);
                 Thread.Sleep(int.Parse($"{Configuration["log-generation-time-interval"]}"));
             }
-            while (report.iterationscount != (Epoch));
+            while (!trainingCompleted);
         }
 
         public double[] UnpackTheta(Matrix<double>[] thetaPacked)
